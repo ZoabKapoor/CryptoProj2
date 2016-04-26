@@ -7,6 +7,10 @@ import com.microsoft.azure.storage.blob.*;
 
 public class UploaderDownloader {
 	
+	static String containerName;
+	static String fileReference;
+	static String blobName;
+	
 	//blob credentials
 	public static final String storageConnectionString =
 			"DefaultEndpointsProtocol=http;" +
@@ -14,7 +18,7 @@ public class UploaderDownloader {
 					"AccountKey=SSpOZPJ5PJx+f/ehu58tf8jam+HRZo3Dpq1/+SvFT8mHBOWbXIN25e4lHadRR2Teq0i/JD4909PJNy30BEAfWA==";
 	
 	//Start connection with associated azure account and create a container
-	public static void uploadBlob(String containerName, String fileReference, String blobName) {
+	public static void uploadBlob() {
 			try
 			{
 				// Retrieve storage account from connection-string.
@@ -30,7 +34,7 @@ public class UploaderDownloader {
 			   // Create the container if it does not exist.
 			    container.createIfNotExists();
 
-			    // Create or overwrite the "myimage.jpg" blob with contents from a local file.
+			    // Create or overwrite Blob with name
 			    CloudBlockBlob blob = container.getBlockBlobReference(blobName);
 			   
 			    blob.uploadFromFile(fileReference);
@@ -44,8 +48,12 @@ public class UploaderDownloader {
 		
 	}
 	public static void main(String[] args) {
-		uploadBlob("JuliasBlobs", "/Users/juliamcarr/Documents/workspace/CryptoProj2/output.txt", "output");
-		System.out.println("All done! You have uploaded a blob!");
+		containerName = "JuliasBlob2";
+		blobName = "output";
+		fileReference = "/Users/juliamcarr/Documents/workspace/CryptoProj2/output.txt";
+		
+		uploadBlob();
+		System.out.println("All done! You have uploaded a blob named " + blobName);
 
 	}
 

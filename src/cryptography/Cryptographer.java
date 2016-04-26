@@ -27,7 +27,7 @@ public class Cryptographer {
 	// TODO - Change crypto mode to more secure mode, figure out how to construct key for AES
 	// Could hash the key into a SHA256 and use that as the actual key 
 	private SecretKey key;
-//	private final byte[] SALT = "0".getBytes();
+	//	private final byte[] SALT = "0".getBytes();
 	
 	// static SecureRandom rnd = new SecureRandom();
 
@@ -109,10 +109,10 @@ public class Cryptographer {
 	
 	public static void main(String[] args) {
 		String keystr = "password";
-		Path inputPath = Paths.get(".", "output.txt");
-		Path outputPath = Paths.get(".","decrypted.txt");
+		Path inputPath = Paths.get(".", "input.txt");
+		Path outputPath = Paths.get(".","output.txt");
 		Cryptographer encoder = new Cryptographer(keystr, inputPath);
-		encoder.doCrypto(outputPath, Cipher.DECRYPT_MODE);
+		encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
 		System.out.println("Done!");
 	}
 }
