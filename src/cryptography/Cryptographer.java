@@ -23,15 +23,11 @@ import javax.crypto.spec.SecretKeySpec;
 public class Cryptographer {
 	
 	private final String ALGORITHM = "AES";
+	// Add authentication with HMAC? Stretch goal.
 	private final String CRYPTOMODE = "AES/CBC/PKCS5Padding";
-	// TODO - Change crypto mode to more secure mode, figure out how to construct key for AES
-	// Could hash the key into a SHA256 and use that as the actual key 
 	private SecretKey key;
-//	private final byte[] SALT = "0".getBytes();
 	
-	// static SecureRandom rnd = new SecureRandom();
-
-	// 16 is a magic number - fix
+	// 16 is a magic number & IV is 0 - neither good
 	static IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 	
 	byte[] bytes;
@@ -109,10 +105,18 @@ public class Cryptographer {
 	
 	public static void main(String[] args) {
 		String keystr = "password";
-		Path inputPath = Paths.get(".", "output.txt");
-		Path outputPath = Paths.get(".","decrypted.txt");
+		Path inputPath = Paths.get(".", "input.txt");
+		Path outputPath = Paths.get(".","output.txt");
 		Cryptographer encoder = new Cryptographer(keystr, inputPath);
-		encoder.doCrypto(outputPath, Cipher.DECRYPT_MODE);
+		encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
 		System.out.println("Done!");
+		try {
+			int limit = Cipher.getMaxAllowedKeyLength("RC5");
+			System.out.println(limit);
+			System.out.println(Integer.MAX_VALUE);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
