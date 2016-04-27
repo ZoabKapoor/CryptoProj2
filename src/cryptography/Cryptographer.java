@@ -10,6 +10,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
@@ -22,14 +23,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Cryptographer {
 	
-	private final String ALGORITHM = "AES";
+	private static final String ALGORITHM = "AES";
 	// Add authentication with HMAC? Stretch goal.
-	private final String CRYPTOMODE = "AES/CBC/PKCS5Padding";
-	private SecretKey key;
+	private static final String CRYPTOMODE = "AES/CBC/PKCS5Padding";
+	private static final int IVLENGTH = 16;
 	
-	// 16 is a magic number & IV is 0 - neither good
-	static IvParameterSpec iv = new IvParameterSpec(new byte[16]);
-	
+	private SecretKey key;	
 	byte[] bytes;
 	
 	public Cryptographer(String keyString, Path p) {
@@ -54,6 +53,13 @@ public class Cryptographer {
 		}
 	}
 	
+	private IvParameterSpec generateIV(int lengthInBits) {
+		SecureRandom random = new SecureRandom();
+		byte iv[] = new byte[lengthInBits];
+		random.nextBytes(iv);
+		return new IvParameterSpec(iv);
+	}
+	
 	public void changePath(Path p) {
 		try {
 			bytes = Files.readAllBytes(p);
@@ -66,31 +72,45 @@ public class Cryptographer {
 		key = generateKey(newKeyString);
 	}
 	
+	public static String byteArrayToHex(byte[] a) {
+		   StringBuilder sb = new StringBuilder(a.length * 2);
+		   for(byte b: a)
+		      sb.append(String.format("%02x", b & 0xff));
+		   return sb.toString();
+		}
+	
 	public void doCrypto(Path out, int mode) {
-			Cipher cipher = createCipher();
-			try {
-				if (mode == Cipher.ENCRYPT_MODE) {
-					cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-				} else if (mode == Cipher.DECRYPT_MODE) {
-					cipher.init(Cipher.DECRYPT_MODE, key, iv);
-				} else {
-					throw new IllegalArgumentException("The mode specified is not valid. Please use "
-							+ "1 for encryption or 2 for decryption");
-				}
-			} catch (InvalidKeyException e) {
-				throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
-			} catch (InvalidAlgorithmParameterException e) {
-				throw new IllegalArgumentException("A parameter passed into the algorithm was not valid!", e);
+		Cipher cipher = createCipher();
+		byte[] output;
+		try {
+			if (mode == Cipher.ENCRYPT_MODE) {
+				IvParameterSpec iv = generateIV(IVLENGTH);
+				cipher.init(mode, key, iv);
+				byte[] ivBytes = cipher.getIV();
+				byte[] message = cipher.doFinal(bytes);
+				output = new byte[ivBytes.length + message.length];
+				System.arraycopy(ivBytes, 0, output, 0, ivBytes.length);
+				System.arraycopy(message, 0, output, ivBytes.length, message.length);
+			} else if (mode == Cipher.DECRYPT_MODE) {
+				byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
+				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH,bytes.length);
+				cipher.init(mode, key, new IvParameterSpec(ivBytes));
+				output = cipher.doFinal(message);
+			} else {
+				throw new IllegalArgumentException("The mode specified is not valid. Please use "
+						+ "1 for encryption or 2 for decryption");
 			}
-			try {
-				byte[] output = cipher.doFinal(bytes);
-				Files.createFile(out);
-				Files.write(out, output, StandardOpenOption.WRITE);
-			} catch (IllegalBlockSizeException | BadPaddingException e) {
-				throw new RuntimeException("Crypto failed!", e);
-			} catch (IOException e) {
-				throw new RuntimeException("Couldn't write the output file!", e);
-			}
+			Files.createFile(out);
+			Files.write(out, output, StandardOpenOption.WRITE);
+		} catch (InvalidKeyException e) {
+			throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
+		} catch (InvalidAlgorithmParameterException e) {
+			throw new IllegalArgumentException("A parameter passed into the algorithm was not valid!", e);
+		} catch (IllegalBlockSizeException | BadPaddingException e) {
+			throw new RuntimeException("Crypto failed!", e);
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't write the output file!", e);
+		}
 	}
 	
 	public Cipher createCipher() {
@@ -109,14 +129,9 @@ public class Cryptographer {
 		Path outputPath = Paths.get(".","output.txt");
 		Cryptographer encoder = new Cryptographer(keystr, inputPath);
 		encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
+		Cryptographer decoder = new Cryptographer(keystr, outputPath);
+		Path decryptedPath = Paths.get(".", "decrypted.txt");
+		decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
 		System.out.println("Done!");
-		try {
-			int limit = Cipher.getMaxAllowedKeyLength("RC5");
-			System.out.println(limit);
-			System.out.println(Integer.MAX_VALUE);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 }
