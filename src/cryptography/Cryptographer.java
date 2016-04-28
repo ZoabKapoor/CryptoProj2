@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -72,13 +71,6 @@ public class Cryptographer {
 		key = generateKey(newKeyString);
 	}
 	
-	public static String byteArrayToHex(byte[] a) {
-		   StringBuilder sb = new StringBuilder(a.length * 2);
-		   for(byte b: a)
-		      sb.append(String.format("%02x", b & 0xff));
-		   return sb.toString();
-		}
-	
 	public void doCrypto(Path out, int mode) {
 		Cipher cipher = createCipher();
 		byte[] output;
@@ -101,7 +93,9 @@ public class Cryptographer {
 						+ "1 for encryption or 2 for decryption");
 			}
 			Files.createFile(out);
-			Files.write(out, output, StandardOpenOption.WRITE);
+			// If you don't want to overwrite the output file if it already exists,
+			// add StandardOpenOption.CREATE as a parameter
+			Files.write(out, output);
 		} catch (InvalidKeyException e) {
 			throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
 		} catch (InvalidAlgorithmParameterException e) {
