@@ -1,16 +1,15 @@
 package cryptography;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -30,25 +29,18 @@ public class Cryptographer {
 	private SecretKey key;	
 	byte[] bytes;
 	
-	public Cryptographer(String keyString, Path p) {
-		key = generateKey(keyString);
+	public Cryptographer(Path keyPath, Path p) {
+		try {
+			byte[] encoded = Files.readAllBytes(keyPath);
+			byte[] keyBytes = Base64.getDecoder().decode(encoded);
+			key = new SecretKeySpec(keyBytes, ALGORITHM);
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't read the file with path " + keyPath + " . Is the file path correct?", e);
+		}
 		try {
 			bytes = Files.readAllBytes(p);
 		} catch (IOException e) {
 			throw new RuntimeException("Couldn't read the file with path " + p + " . Is the file path correct?", e);
-		}
-	}
-	
-	public SecretKey generateKey(String keyString) {
-		try {		
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] keyBytes = digest.digest(keyString.getBytes(StandardCharsets.UTF_8));
-			keyBytes = Arrays.copyOf(keyBytes, 16);
-			// Have to trim the key to 16 bytes to use in AES
-			SecretKey secret = new SecretKeySpec(keyBytes, ALGORITHM);
-			return secret;
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Key could not be generated!", e);
 		}
 	}
 	
@@ -67,8 +59,12 @@ public class Cryptographer {
 		}
 	}
 	
-	public void changeKey(String newKeyString) {
-		key = generateKey(newKeyString);
+	public void changeKey(Path newKeyPath) {
+		try {
+			key = new SecretKeySpec(Files.readAllBytes(newKeyPath), ALGORITHM);
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't read the file with path " + newKeyPath + " . Is the file path correct?", e);
+		}
 	}
 	
 	public void doCrypto(Path out, int mode) {
@@ -95,6 +91,7 @@ public class Cryptographer {
 			Files.createFile(out);
 			// If you don't want to overwrite the output file if it already exists,
 			// add StandardOpenOption.CREATE as a parameter
+			// This doesn't seem to work? 
 			Files.write(out, output);
 		} catch (InvalidKeyException e) {
 			throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
@@ -118,12 +115,12 @@ public class Cryptographer {
 	}
 	
 	public static void main(String[] args) {
-		String keystr = "password";
+		Path keyPath = Paths.get(".", "key.txt");
 		Path inputPath = Paths.get(".", "input.txt");
 		Path outputPath = Paths.get(".","output.txt");
-		Cryptographer encoder = new Cryptographer(keystr, inputPath);
+		Cryptographer encoder = new Cryptographer(keyPath, inputPath);
 		encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
-		Cryptographer decoder = new Cryptographer(keystr, outputPath);
+		Cryptographer decoder = new Cryptographer(keyPath, outputPath);
 		Path decryptedPath = Paths.get(".", "decrypted.txt");
 		decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
 		System.out.println("Done!");
