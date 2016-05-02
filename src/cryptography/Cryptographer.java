@@ -14,17 +14,23 @@ import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import static org.junit.Assert.*;
+
+import io.jsonwebtoken.lang.Assert;
+
 public class Cryptographer {
 
 	private static final String ALGORITHM = "AES";
-	// Add authentication with HMAC? Stretch goal.
 	private static final String CRYPTOMODE = "AES/CBC/PKCS5Padding";
+	private static final String HMACMODE = "HmacSHA256";
 	private static final int IVLENGTH = 16;
+	private static final int HMACLENGTH = 32;
 	
 	private SecretKey key;	
 	byte[] bytes;
@@ -69,6 +75,15 @@ public class Cryptographer {
 	
 	public void doCrypto(Path out, int mode) {
 		Cipher cipher = createCipher();
+		Mac mac;
+		try {
+			mac = Mac.getInstance(HMACMODE);
+			mac.init(key);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalArgumentException("The HMAC mode specified " + HMACMODE + " doesn't exist! (maybe it's unsupported by this machine)", e);
+		} catch (InvalidKeyException e) {
+			throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
+		}
 		byte[] output;
 		try {
 			if (mode == Cipher.ENCRYPT_MODE) {
@@ -76,12 +91,21 @@ public class Cryptographer {
 				cipher.init(mode, key, iv);
 				byte[] ivBytes = cipher.getIV();
 				byte[] message = cipher.doFinal(bytes);
-				output = new byte[ivBytes.length + message.length];
+				byte[] hmac = mac.doFinal(message);
+				assertEquals("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH, 
+						ivBytes.length, IVLENGTH);
+				assertEquals("The HMAC generated has length: " + hmac.length + " but is required to have length: " + HMACLENGTH,
+						hmac.length, HMACLENGTH);
+				output = new byte[ivBytes.length + message.length + hmac.length];
 				System.arraycopy(ivBytes, 0, output, 0, ivBytes.length);
 				System.arraycopy(message, 0, output, ivBytes.length, message.length);
+				System.arraycopy(hmac, 0, output, ivBytes.length + message.length, hmac.length);
 			} else if (mode == Cipher.DECRYPT_MODE) {
 				byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
-				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH,bytes.length);
+				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length);
+				byte[] messageHmac = Arrays.copyOfRange(bytes, IVLENGTH+message.length, bytes.length);
+				byte[] calcHmac = mac.doFinal(message);
+				assertEquals("Message HMAC is not valid!", messageHmac, calcHmac);
 				cipher.init(mode, key, new IvParameterSpec(ivBytes));
 				output = cipher.doFinal(message);
 			} else {
