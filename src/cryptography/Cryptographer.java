@@ -99,7 +99,6 @@ public class Cryptographer {
 				System.arraycopy(message, 0, output, ivBytes.length, message.length);
 				System.arraycopy(hmac, 0, output, ivBytes.length + message.length, hmac.length);
 			} else if (mode == Cipher.DECRYPT_MODE) {
-				System.out.println(byteArrayToHex(bytes));
 				byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
 				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length - HMACLENGTH);
 				byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
@@ -153,6 +152,6 @@ public class Cryptographer {
 		Cryptographer decoder = new Cryptographer(keyPath, outputPath);
 		Path decryptedPath = Paths.get(".", "decrypted.txt");
 		decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
-		System.out.println("Done!");
+		System.out.println("Encryption/decryption complete!");
 	}
 }

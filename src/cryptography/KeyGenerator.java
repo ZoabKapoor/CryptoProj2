@@ -26,5 +26,6 @@ public class KeyGenerator {
 	public static void main(String[] args) {
 		Path keyPath = Paths.get(".", "key.txt");
 		generateKey(keyPath);
+		System.out.println("Key generated!");
 	}
 }
