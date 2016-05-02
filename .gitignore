@@ -4,4 +4,4 @@
 bin
 .DS_Store
 azure
-.txt
+*.txt

@@ -22,8 +22,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.Assert.*;
 
-import io.jsonwebtoken.lang.Assert;
-
 public class Cryptographer {
 
 	private static final String ALGORITHM = "AES";
@@ -101,18 +99,19 @@ public class Cryptographer {
 				System.arraycopy(message, 0, output, ivBytes.length, message.length);
 				System.arraycopy(hmac, 0, output, ivBytes.length + message.length, hmac.length);
 			} else if (mode == Cipher.DECRYPT_MODE) {
+				System.out.println(byteArrayToHex(bytes));
 				byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
-				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length);
-				byte[] messageHmac = Arrays.copyOfRange(bytes, IVLENGTH+message.length, bytes.length);
+				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length - HMACLENGTH);
+				byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
 				byte[] calcHmac = mac.doFinal(message);
-				assertEquals("Message HMAC is not valid!", messageHmac, calcHmac);
+				assertArrayEquals("Message HMAC is not valid!", messageHmac, calcHmac);
 				cipher.init(mode, key, new IvParameterSpec(ivBytes));
 				output = cipher.doFinal(message);
 			} else {
 				throw new IllegalArgumentException("The mode specified is not valid. Please use "
 						+ "1 for encryption or 2 for decryption");
 			}
-			Files.createFile(out);
+			// Files.createFile(out);
 			// If you don't want to overwrite the output file if it already exists,
 			// add StandardOpenOption.CREATE as a parameter
 			// This doesn't seem to work? 
@@ -136,6 +135,13 @@ public class Cryptographer {
 		} catch (NoSuchPaddingException e) {
 			throw new RuntimeException("The padding schema requested is unavailable!", e);
 		}
+	}
+	
+	public static String byteArrayToHex(byte[] a) {
+		StringBuilder sb = new StringBuilder(a.length * 2);
+		for(byte b: a)
+			sb.append(String.format("%02x", b & 0xff));
+		return sb.toString();
 	}
 	
 	public static void main(String[] args) {
