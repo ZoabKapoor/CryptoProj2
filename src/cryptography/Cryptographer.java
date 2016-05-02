@@ -20,7 +20,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Cryptographer {
-	
+
 	private static final String ALGORITHM = "AES";
 	// Add authentication with HMAC? Stretch goal.
 	private static final String CRYPTOMODE = "AES/CBC/PKCS5Padding";
