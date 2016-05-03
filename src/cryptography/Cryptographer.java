@@ -94,9 +94,9 @@ public class Cryptographer {
 	}
 	
 	/**
-	 * 
-	 * @param out
-	 * @param mode
+	 * Encrypts/decrypts the contents of bytes, adds or checks a MAC, and writes encrypted/decrypted bytes out to a file
+	 * @param out    The output path to save the encrypted/decrypted file to 
+	 * @param mode   The encryption/decryption mode. 1 is to encrypt, 2 is to decrypt. 
 	 */
 	public void doCrypto(Path out, int mode) {
 		Cipher cipher = createCipher();
@@ -112,27 +112,9 @@ public class Cryptographer {
 		byte[] output;
 		try {
 			if (mode == Cipher.ENCRYPT_MODE) {
-				IvParameterSpec iv = generateIV(IVLENGTH);
-				cipher.init(mode, key, iv);
-				byte[] ivBytes = cipher.getIV();
-				byte[] message = cipher.doFinal(bytes);
-				byte[] hmac = mac.doFinal(message);
-				assertEquals("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH, 
-						ivBytes.length, IVLENGTH);
-				assertEquals("The HMAC generated has length: " + hmac.length + " but is required to have length: " + HMACLENGTH,
-						hmac.length, HMACLENGTH);
-				output = new byte[ivBytes.length + message.length + hmac.length];
-				System.arraycopy(ivBytes, 0, output, 0, ivBytes.length);
-				System.arraycopy(message, 0, output, ivBytes.length, message.length);
-				System.arraycopy(hmac, 0, output, ivBytes.length + message.length, hmac.length);
+				output = encrypt(cipher, mode, mac);
 			} else if (mode == Cipher.DECRYPT_MODE) {
-				byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
-				byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length - HMACLENGTH);
-				byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
-				byte[] calcHmac = mac.doFinal(message);
-				assertArrayEquals("Message HMAC is not valid!", messageHmac, calcHmac);
-				cipher.init(mode, key, new IvParameterSpec(ivBytes));
-				output = cipher.doFinal(message);
+				output = decrypt(cipher, mode, mac);
 			} else {
 				throw new IllegalArgumentException("The mode specified is not valid. Please use "
 						+ "1 for encryption or 2 for decryption");
@@ -150,6 +132,55 @@ public class Cryptographer {
 		} catch (IOException e) {
 			throw new RuntimeException("Couldn't write the output file!", e);
 		}
+	}
+	
+	/**
+	 * 
+	 * @param cipher   The cipher to encrypt the data with 
+	 * @param mode	   Should be Cipher.ENCRYPT_MODE
+	 * @param mac      The Mac used to create the message's MAC 
+	 * @return     	   A byte array with the format { IV | ciphertext | HMAC }
+	 * @throws InvalidKeyException
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 */
+	private byte[] encrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		IvParameterSpec iv = generateIV(IVLENGTH);
+		cipher.init(mode, key, iv);
+		byte[] ivBytes = cipher.getIV();
+		byte[] message = cipher.doFinal(bytes);
+		byte[] hmac = mac.doFinal(message);
+		assertEquals("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH, 
+				ivBytes.length, IVLENGTH);
+		assertEquals("The HMAC generated has length: " + hmac.length + " but is required to have length: " + HMACLENGTH,
+				hmac.length, HMACLENGTH);
+		byte[] output = new byte[ivBytes.length + message.length + hmac.length];
+		System.arraycopy(ivBytes, 0, output, 0, ivBytes.length);
+		System.arraycopy(message, 0, output, ivBytes.length, message.length);
+		System.arraycopy(hmac, 0, output, ivBytes.length + message.length, hmac.length);
+		return output;
+	}
+	
+	/**
+	 * 
+	 * @param cipher   The cipher to decrypt the data with 
+	 * @param mode     Should be Cipher.DECRYPT_MODE
+	 * @param mac      The Mac used to check the message's MAC
+	 * @return 		   A plaintext byte array corresponding to the data in bytes decrypted
+	 * @throws InvalidKeyException  
+	 * @throws InvalidAlgorithmParameterException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 */
+	private byte[] decrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
+		byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length - HMACLENGTH);
+		byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
+		byte[] calcHmac = mac.doFinal(message);
+		assertArrayEquals("Message HMAC is not valid!", messageHmac, calcHmac);
+		cipher.init(mode, key, new IvParameterSpec(ivBytes));
+		return cipher.doFinal(message);
 	}
 	
 	/**
