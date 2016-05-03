@@ -33,6 +33,14 @@ public class Cryptographer {
 	private SecretKey key;	
 	byte[] bytes;
 	
+	/**
+	 * 
+	 * @param keyPath  The path to the encryption/decryption key. Key must be stored in Base64 encoding and be the appropriate length
+	 * 					for the cryptography & MAC algorithms used.
+	 * @param p		The path to the data you want encrypted/decrypted. Data to encrypt should have the format {plaintext} while
+	 * 				data to decrypt should have the format {IV | ciphertext | HMAC}, where the IV is IVLENGTH bytes long 
+	 * 				& HMAC is HMACLENGTH bytes long
+	 */
 	public Cryptographer(Path keyPath, Path p) {
 		try {
 			byte[] encoded = Files.readAllBytes(keyPath);
@@ -48,14 +56,24 @@ public class Cryptographer {
 		}
 	}
 	
-	private IvParameterSpec generateIV(int lengthInBits) {
+	/**
+	 * Uses a SecureRandom to generate an n-byte initialization vector (for algorithms that need it)
+	 * 
+	 * @param length The length of IV to generate, in bytes
+	 * @return An IvParameterSpec initialized with length bytes of IV 
+	 */
+	private IvParameterSpec generateIV(int length) {
 		SecureRandom random = new SecureRandom();
-		byte iv[] = new byte[lengthInBits];
+		byte iv[] = new byte[length];
 		random.nextBytes(iv);
 		return new IvParameterSpec(iv);
 	}
 	
-	public void changePath(Path p) {
+	/**
+	 * Changes the data that the Cryptographer is to encrypt/decrypt 
+	 * @param p  Path to the new data
+	 */
+	public void changeData(Path p) {
 		try {
 			bytes = Files.readAllBytes(p);
 		} catch (IOException e) {
@@ -63,6 +81,10 @@ public class Cryptographer {
 		}
 	}
 	
+	/**
+	 * Changes the encryption/decryption key
+	 * @param newKeyPath   The path to the file with the new key
+	 */
 	public void changeKey(Path newKeyPath) {
 		try {
 			key = new SecretKeySpec(Files.readAllBytes(newKeyPath), ALGORITHM);
@@ -71,6 +93,11 @@ public class Cryptographer {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param out
+	 * @param mode
+	 */
 	public void doCrypto(Path out, int mode) {
 		Cipher cipher = createCipher();
 		Mac mac;
@@ -110,10 +137,9 @@ public class Cryptographer {
 				throw new IllegalArgumentException("The mode specified is not valid. Please use "
 						+ "1 for encryption or 2 for decryption");
 			}
-			// Files.createFile(out);
-			// If you don't want to overwrite the output file if it already exists,
-			// add StandardOpenOption.CREATE as a parameter
-			// This doesn't seem to work? 
+			// This overwrites any file with path out that already exists.
+			// If you don't want this to happen, there are OpenOptions that
+			// you can add to the call to prevent this. 
 			Files.write(out, output);
 		} catch (InvalidKeyException e) {
 			throw new IllegalArgumentException("The key " + key.toString() + " is not valid!", e);
@@ -126,16 +152,26 @@ public class Cryptographer {
 		}
 	}
 	
+	/**
+	 * @return A cipher with mode CRYPTOMODE, if it exists. Throws an exception if the algorithm or padding schema requested 
+	 * isn't available
+	 */
 	public Cipher createCipher() {
 		try {
 			return Cipher.getInstance(CRYPTOMODE);
 		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("The algorithm requested does not exist!", e);
+			throw new RuntimeException("The algorithm requested is unavailable!", e);
 		} catch (NoSuchPaddingException e) {
 			throw new RuntimeException("The padding schema requested is unavailable!", e);
 		}
 	}
 	
+	/**
+	 * Helper function to print a byte array as a hex string. 
+	 * 
+	 * @param a    The byte array to translate to a hex string
+	 * @return    A string whose contents are the hex of the input byte array. 
+	 */
 	public static String byteArrayToHex(byte[] a) {
 		StringBuilder sb = new StringBuilder(a.length * 2);
 		for(byte b: a)
