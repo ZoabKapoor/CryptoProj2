@@ -150,6 +150,7 @@ public class Cryptographer {
 		cipher.init(mode, key, iv);
 		byte[] ivBytes = cipher.getIV();
 		byte[] message = cipher.doFinal(bytes);
+		// Note that the MAC is calculated on the encrypted text, not the plaintext. This protects against padding oracle attacks
 		byte[] hmac = mac.doFinal(message);
 		assertEquals("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH, 
 				ivBytes.length, IVLENGTH);
