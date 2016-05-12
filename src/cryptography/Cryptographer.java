@@ -97,8 +97,10 @@ public class Cryptographer {
 	 * Encrypts/decrypts the contents of bytes, adds or checks a MAC, and writes encrypted/decrypted bytes out to a file
 	 * @param out    The output path to save the encrypted/decrypted file to 
 	 * @param mode   The encryption/decryption mode. 1 is to encrypt, 2 is to decrypt. 
+	 * @throws IOException 
+	 * @throws IntegrityException 
 	 */
-	public void doCrypto(Path out, int mode) {
+	public void doCrypto(Path out, int mode) throws IOException, IntegrityException {
 		Cipher cipher = createCipher();
 		Mac mac;
 		try {
@@ -130,7 +132,9 @@ public class Cryptographer {
 		} catch (IllegalBlockSizeException | BadPaddingException e) {
 			throw new RuntimeException("Crypto failed!", e);
 		} catch (IOException e) {
-			throw new RuntimeException("Couldn't write the output file!", e);
+			throw new IOException("Couldn't write the output file!", e);
+		} catch (IntegrityException e){
+			throw e;
 		}
 	}
 	
@@ -144,18 +148,21 @@ public class Cryptographer {
 	 * @throws InvalidAlgorithmParameterException
 	 * @throws IllegalBlockSizeException
 	 * @throws BadPaddingException
+	 * @throws IntegrityException
 	 */
-	private byte[] encrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+	private byte[] encrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IntegrityException {
 		IvParameterSpec iv = generateIV(IVLENGTH);
 		cipher.init(mode, key, iv);
 		byte[] ivBytes = cipher.getIV();
 		byte[] message = cipher.doFinal(bytes);
 		// Note that the MAC is calculated on the encrypted text, not the plaintext. This protects against padding oracle attacks
 		byte[] hmac = mac.doFinal(message);
-		assertEquals("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH, 
-				ivBytes.length, IVLENGTH);
-		assertEquals("The HMAC generated has length: " + hmac.length + " but is required to have length: " + HMACLENGTH,
-				hmac.length, HMACLENGTH);
+		if (IVLENGTH != ivBytes.length){
+			throw new IntegrityException("The IV generated has length: " + ivBytes.length + " but is required to have length: " + IVLENGTH);
+		}
+		if (hmac.length != HMACLENGTH){
+			throw new IntegrityException("The HMAC generated has length: " + hmac.length + " but is required to have length: " + HMACLENGTH);
+		}
 		byte[] output = new byte[ivBytes.length + message.length + hmac.length];
 		System.arraycopy(ivBytes, 0, output, 0, ivBytes.length);
 		System.arraycopy(message, 0, output, ivBytes.length, message.length);
@@ -174,12 +181,14 @@ public class Cryptographer {
 	 * @throws IllegalBlockSizeException
 	 * @throws BadPaddingException
 	 */
-	private byte[] decrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+	private byte[] decrypt(Cipher cipher, int mode, Mac mac) throws InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IntegrityException {
 		byte[] ivBytes = Arrays.copyOfRange(bytes, 0, IVLENGTH);
 		byte[] message = Arrays.copyOfRange(bytes, IVLENGTH, bytes.length - HMACLENGTH);
 		byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
 		byte[] calcHmac = mac.doFinal(message);
-		assertArrayEquals("Message HMAC is not valid!", messageHmac, calcHmac);
+		if (!Arrays.equals(messageHmac, calcHmac)){
+			throw new IntegrityException("Message HMAC is not valid!");
+		}
 		cipher.init(mode, key, new IvParameterSpec(ivBytes));
 		return cipher.doFinal(message);
 	}
@@ -216,10 +225,24 @@ public class Cryptographer {
 		Path inputPath = Paths.get(".", "input.txt");
 		Path outputPath = Paths.get(".","output.txt");
 		Cryptographer encoder = new Cryptographer(keyPath, inputPath);
-		encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
+		//encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
 		Cryptographer decoder = new Cryptographer(keyPath, outputPath);
 		Path decryptedPath = Paths.get(".", "decrypted.txt");
-		decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
+		//decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
 		System.out.println("Encryption/decryption complete!");
 	}
 }
+
+class IntegrityException extends Exception
+{
+	private static final long serialVersionUID = 1L;
+
+	//Parameterless Constructor
+      public IntegrityException() {}
+
+      //Constructor that accepts a message
+      public IntegrityException(String message)
+      {
+         super(message);
+      }
+ }
