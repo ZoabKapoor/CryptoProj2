@@ -11,6 +11,10 @@ public class KeyGenerator {
 	
 	private static final int KEYLENGTH = 32;
 
+	/**
+	 * Generates a KEYLENGTH-byte key, encodes it to Base-64 and writes it out to a file 
+	 * @param out   The path to save the generated key to. 
+	 */
 	public static void generateKey(Path out) {
 		SecureRandom rand = new SecureRandom();
 		byte[] key = new byte[KEYLENGTH];
