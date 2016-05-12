@@ -30,7 +30,7 @@ public class UploaderDownloader {
 	
 		//Start connection with associated azure account and create a container
 	//Take user input of either upload, download, or list 
-		public static void blobAction(String x) {
+		public static void blobAction(String filePath, String action) {
 				try
 				{
 					// Retrieve storage account from connection-string.
@@ -60,28 +60,31 @@ public class UploaderDownloader {
 				    
 				    
 				    //upload the blob if the user enters the upload string
-				    if (x.equalsIgnoreCase("upload")) {
+				    if (action.equalsIgnoreCase("upload")) {
 				    
 				    blob.uploadFromFile(fileReference);
 				    
 				    }
 				    
-				    else if (x.equalsIgnoreCase("list")) {
+				    else if (action.equalsIgnoreCase("list")) {
 				    	for (ListBlobItem blobItem : container.listBlobs()) {
 						       System.out.println(blobItem.getUri());
 						   }
 				    }
-				    else if (x.equalsIgnoreCase("download")) {
-				    	 //download the blobs that are in the container to a file
+				    else if (action.equalsIgnoreCase("download")) {
+				    	//download the blob with the correct filePath into users folder
 					    for (ListBlobItem blobItem : container.listBlobs()) {
 					        // If the item is a blob, not a virtual directory.
 					        if (blobItem instanceof CloudBlob) {
-					            // Download the item and save it to a file with the same name.
-					             CloudBlob blob1 = (CloudBlob) blobItem;
+					        	CloudBlob blob1 = (CloudBlob) blobItem;
+					        	if (blob1.getUri().toString().equalsIgnoreCase(filePath)) {
 					             blob.download(new FileOutputStream(fileDestination + blob1.getName()));
+		
 					         }
 					     }
+					    }
 				    }
+					  
 				    else {
 				    	System.out.println("Sorry, that command wasn't recognized!"
 				    			+ "Please use the upload, download, or list command");
@@ -106,12 +109,13 @@ public class UploaderDownloader {
 		// this should be user inputted
 		//what the user wants to name the blob
 		//where the file of the blob is located
-		blobName = "Testinput";
+		blobName = "input2";
 		fileReference = "/Users/juliamcarr/Documents/Test/Testinput";
-		fileDestination = "/Users/juliamcarr/Documents/Test/";
-		blobAction("upload");
-		blobAction("list");
+		fileDestination = "/Users/juliamcarr/Documents/Julia/";
+		//blobAction("/Users/juliamcarr/Documents/Test/Testinput","upload");
+		//blobAction("","list");
 		//uploadBlob();
+		blobAction("http://juliamcarr.blob.core.windows.net/mycontainer/input2", "download");
 		System.out.println("All done! You have uploaded a blob named " + blobName);
 		
 	}
