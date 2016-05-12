@@ -1,5 +1,6 @@
 package transfer;
 
+
 import java.io.FileOutputStream;
 
 import com.microsoft.azure.storage.*;
@@ -77,7 +78,8 @@ public class UploaderDownloader {
 					        if (blobItem instanceof CloudBlob) {
 					        	CloudBlob blob1 = (CloudBlob) blobItem;
 					        	if (blob1.getUri().toString().equalsIgnoreCase(filePath)) {
-					             blob.download(new FileOutputStream(fileDestination));
+					             blob.download(new FileOutputStream(fileDestination + blob1.getName()));
+		
 					         }
 					     }
 					    }
@@ -94,17 +96,25 @@ public class UploaderDownloader {
 				    // Output the stack trace.
 				    e.printStackTrace();
 				}
-		}	
+			
+		}
+	
+
+	
 	
 	
 	public static void main(String[] args) {
 		storageConnection("juliamcarr",
 				"SSpOZPJ5PJx+f/ehu58tf8jam+HRZo3Dpq1/+SvFT8mHBOWbXIN25e4lHadRR2Teq0i/JD4909PJNy30BEAfWA==");
+		//this should be user inputted
+		//what the user wants to name the blob
+		//where the file of the blob is located
 		blobName = "input2";
 		fileReference = "/Users/juliamcarr/Documents/Test/Testinput";
 		fileDestination = "/Users/juliamcarr/Documents/Julia/";
-
 		blobAction("http://juliamcarr.blob.core.windows.net/mycontainer/input2", "download");
 		System.out.println("All done! You have uploaded a blob named " + blobName);
+		
 	}
+
 }
