@@ -20,8 +20,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import static org.junit.Assert.*;
-
 public class Cryptographer {
 
 	private static final String ALGORITHM = "AES";
@@ -232,17 +230,3 @@ public class Cryptographer {
 		System.out.println("Encryption/decryption complete!");
 	}
 }
-
-class IntegrityException extends Exception
-{
-	private static final long serialVersionUID = 1L;
-
-	//Parameterless Constructor
-      public IntegrityException() {}
-
-      //Constructor that accepts a message
-      public IntegrityException(String message)
-      {
-         super(message);
-      }
- }

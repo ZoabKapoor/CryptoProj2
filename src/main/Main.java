@@ -9,9 +9,10 @@ import java.util.Scanner;
 import javax.crypto.Cipher;
 
 import cryptography.KeyGenerator;
+import cryptography.Cryptographer;
+import cryptography.IntegrityException;
+import transfer.UploaderDownloader;
 
-// create a random key and share the key offline, give the user four options
-// separate the four steps, a) upload, b) download, c) encrypt, d) decrypt
 public class Main {
 	private static Path keyPath;
 	private static String StorageName;
@@ -68,6 +69,22 @@ public class Main {
 		}
 	}
 
+	/**
+	 * Encrypts/decrypts the contents of the file stored under fileStr, adds or
+	 * checks a MAC, and writes encrypted/decrypted bytes out to a file under
+	 * outputPath
+	 * 
+	 * @param sc
+	 *            The Scanner passed to get user's input from console
+	 * @param fileStr
+	 *            The path of the input file for encryption/decryption
+	 * @param action
+	 *            The indicator for encryption/decryption
+	 * @throws IOException
+	 * @throws IntegrityException
+	 * @return the output path for the file that stores the encrypted/decrypted
+	 *         data
+	 */
 	public static String encryptDecrypt(Scanner sc, String action, String fileStr)
 			throws IOException, IntegrityException {
 		if (fileStr.equals("")) {
@@ -86,16 +103,33 @@ public class Main {
 			Path decryptedPath = FileSystems.getDefault().getPath(output);
 			decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
 		}
-		System.out.println("File: "+fileStr+" "+action+"ion done!");
+		System.out.println("File: " + fileStr + " " + action + "ion done!");
 		return output;
 	}
 
+	/**
+	 * Get the user's input for a file path
+	 * 
+	 * @param sc
+	 *            The Scanner passed to get user's input from console
+	 * @param action
+	 *            The indicator for what kind of action the input file is used
+	 *            for
+	 * @return a string denoting the file path
+	 */
 	public static String getFilePath(Scanner sc, String action) {
 		System.out.println("What is the loaction of the file that you want to " + action + "?");
 		String filePath = sc.nextLine();
 		return filePath;
 	}
 
+	/**
+	 * Create or locate a key file for all encryption/decryption activities
+	 * within one session
+	 * 
+	 * @param sc
+	 *            The Scanner passed to get user's input from console
+	 */
 	public static void getSessionKey(Scanner sc) {
 		System.out.println("Do you have a key file for this session (yes/no)?");
 		String ans = sc.nextLine();
@@ -112,6 +146,19 @@ public class Main {
 		}
 	}
 
+	/**
+	 * Upload/download the contents of the file stored under filePath, or list
+	 * the blobs for the specific storage
+	 * 
+	 * @param action
+	 *            The indicator for uploading/downloading
+	 * @param sc
+	 *            The Scanner passed to get user's input from console
+	 * @param filePath
+	 *            The location of the input file to be uploaded/downloaded. For
+	 *            the option of list, filePath will always be ""
+	 * @return
+	 */
 	public static String uploadDownload(String action, Scanner sc, String filePath) {
 		UploaderDownloader.storageConnection(StorageName, StorageKey);
 		System.out.println("What do you want to name your blob?");
@@ -129,7 +176,7 @@ public class Main {
 			}
 		}
 		UploaderDownloader.blobAction(filePath, action);
-		System.out.println("File: "+filePath+" "+action+"ed!");
+		System.out.println("File: " + filePath + " " + action + "ed!");
 		return outputPath;
 	}
 }
