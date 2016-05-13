@@ -219,14 +219,18 @@ public class Cryptographer {
 	}
 	
 	public static void main(String[] args) {
-		Path keyPath = Paths.get(".", "key.txt");
-		Path inputPath = Paths.get(".", "input.txt");
-		Path outputPath = Paths.get(".","output.txt");
-		Cryptographer encoder = new Cryptographer(keyPath, inputPath);
-		//encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
-		Cryptographer decoder = new Cryptographer(keyPath, outputPath);
-		Path decryptedPath = Paths.get(".", "decrypted.txt");
-		//decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
-		System.out.println("Encryption/decryption complete!");
+		try{
+			Path keyPath = Paths.get(".", "key.txt");
+			Path inputPath = Paths.get(".", "input.txt");
+			Path outputPath = Paths.get(".","output.txt");
+			Cryptographer encoder = new Cryptographer(keyPath, inputPath);
+			encoder.doCrypto(outputPath, Cipher.ENCRYPT_MODE);
+			Cryptographer decoder = new Cryptographer(keyPath, outputPath);
+			Path decryptedPath = Paths.get(".", "decrypted.txt");
+			decoder.doCrypto(decryptedPath, Cipher.DECRYPT_MODE);
+			System.out.println("Encryption/decryption complete!");
+		} catch (Exception e) {
+			throw new RuntimeException("Something went wrong!", e);
+		}
 	}
 }
