@@ -118,7 +118,7 @@ public class Main {
 	 * @return a string denoting the file path
 	 */
 	public static String getFilePath(Scanner sc, String action) {
-		System.out.println("What is the loaction of the file that you want to " + action + "?");
+		System.out.println("What is the location of the file that you want to " + action + "?");
 		String filePath = sc.nextLine();
 		return filePath;
 	}
