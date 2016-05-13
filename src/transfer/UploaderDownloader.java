@@ -16,13 +16,13 @@ public class UploaderDownloader {
 	
 	//blob credentials
 	public static String storageConnectionString =
-		"DefaultEndpointsProtocol=http;" +
+		"DefaultEndpointsProtocol=https;" +
 				"AccountName=;" +
 				"AccountKey=";
 	
 	
 	public static void storageConnection(String userName, String key) {
-		storageConnectionString = "DefaultEndpointsProtocol=http;" + "AccountName=" 
+		storageConnectionString = "DefaultEndpointsProtocol=https;" + "AccountName=" 
 	+ userName + ";" + "AccountKey=" + key;
 	}
 	
@@ -106,12 +106,15 @@ public class UploaderDownloader {
 	public static void main(String[] args) {
 		storageConnection("juliamcarr",
 				"SSpOZPJ5PJx+f/ehu58tf8jam+HRZo3Dpq1/+SvFT8mHBOWbXIN25e4lHadRR2Teq0i/JD4909PJNy30BEAfWA==");
-		//this should be user inputted
+		// this should be user inputted
 		//what the user wants to name the blob
 		//where the file of the blob is located
 		blobName = "input2";
 		fileReference = "/Users/juliamcarr/Documents/Test/Testinput";
 		fileDestination = "/Users/juliamcarr/Documents/Julia/";
+		//blobAction("/Users/juliamcarr/Documents/Test/Testinput","upload");
+		blobAction("","list");
+		//uploadBlob();
 		blobAction("http://juliamcarr.blob.core.windows.net/mycontainer/input2", "download");
 		System.out.println("All done! You have uploaded a blob named " + blobName);
 		
