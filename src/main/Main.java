@@ -149,13 +149,12 @@ public class Main {
 	/**
 	 * Upload/download the contents of the file stored under filePath, or list
 	 * the blobs for the specific storage
-	 * 
 	 * @param action
 	 *            The indicator for uploading/downloading
 	 * @param sc
 	 *            The Scanner passed to get user's input from console
 	 * @param filePath
-	 *            The location of the input file to be uploaded/downloaded. For
+	 *            The location of the input upload/download file. For
 	 *            the option of list, filePath will always be ""
 	 * @return
 	 */
