@@ -16,13 +16,13 @@ public class UploaderDownloader {
 	
 	//blob credentials
 	public static String storageConnectionString =
-		"DefaultEndpointsProtocol=https;" +
+		"DefaultEndpointsProtocol=http;" +
 				"AccountName=;" +
 				"AccountKey=";
 	
 	
 	public static void storageConnection(String userName, String key) {
-		storageConnectionString = "DefaultEndpointsProtocol=https;" + "AccountName=" 
+		storageConnectionString = "DefaultEndpointsProtocol=http;" + "AccountName=" 
 	+ userName + ";" + "AccountKey=" + key;
 	}
 	
@@ -46,21 +46,22 @@ public class UploaderDownloader {
 				   // Create the container if it does not exist.
 				    container.createIfNotExists();
 
-				    // Create or overwrite Blob with name
-				    CloudBlockBlob blob = container.getBlockBlobReference(blobName);
 				   
-				 // Create a permissions object.
-				    BlobContainerPermissions containerPermissions = new BlobContainerPermissions();
-
-				    // Include public access in the permissions object.
-				    containerPermissions.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
-
-				    // Set the permissions on the container.
-				    container.uploadPermissions(containerPermissions);
 				    
 				    
 				    //upload the blob if the user enters the upload string
 				    if (action.equalsIgnoreCase("upload")) {
+				    	// Create or overwrite Blob with name
+					    CloudBlockBlob blob = container.getBlockBlobReference(blobName);
+					   
+					 // Create a permissions object.
+					    BlobContainerPermissions containerPermissions = new BlobContainerPermissions();
+
+					    // Include public access in the permissions object.
+					    containerPermissions.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
+
+					    // Set the permissions on the container.
+					    container.uploadPermissions(containerPermissions);
 				    
 				    blob.uploadFromFile(fileReference);
 				    
@@ -78,7 +79,7 @@ public class UploaderDownloader {
 					        if (blobItem instanceof CloudBlob) {
 					        	CloudBlob blob1 = (CloudBlob) blobItem;
 					        	if (blob1.getUri().toString().equalsIgnoreCase(filePath)) {
-					             blob.download(new FileOutputStream(fileDestination + blob1.getName()));
+					             blob1.download(new FileOutputStream(fileDestination + blob1.getName()));
 		
 					         }
 					     }
@@ -109,12 +110,13 @@ public class UploaderDownloader {
 		// this should be user inputted
 		//what the user wants to name the blob
 		//where the file of the blob is located
-		blobName = "input2";
+		blobName = "input";
 		fileReference = "/Users/juliamcarr/Documents/Test/Testinput";
-		fileDestination = "/Users/juliamcarr/Documents/Julia/";
+		fileDestination = "/Users/juliamcarr/Documents/Test/";
 		//blobAction("/Users/juliamcarr/Documents/Test/Testinput","upload");
 		blobAction("","list");
 		//uploadBlob();
+		blobAction("/Users/juliamcarr/Documents/Test/input","upload");
 		blobAction("http://juliamcarr.blob.core.windows.net/mycontainer/input2", "download");
 		System.out.println("All done! You have uploaded a blob named " + blobName);
 		
