@@ -185,6 +185,9 @@ public class Cryptographer {
 		byte[] messageHmac = Arrays.copyOfRange(bytes, bytes.length - HMACLENGTH, bytes.length);
 		byte[] calcHmac = mac.doFinal(message);
 		if (!Arrays.equals(messageHmac, calcHmac)){
+			// Decrypts file anyway before throwing exception
+			// Guards against timing attacks
+			cipher.doFinal(message);
 			throw new IntegrityException("Message HMAC is not valid!");
 		}
 		cipher.init(mode, key, new IvParameterSpec(ivBytes));
