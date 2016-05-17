@@ -161,8 +161,7 @@ public class Main {
 	 */
 	public static String uploadDownload(String action, Scanner sc, String filePath) {
 		UploaderDownloader.storageConnection(StorageName, StorageKey);
-		System.out.println("What do you want to name your blob?");
-		UploaderDownloader.blobName = sc.nextLine();
+		UploaderDownloader.blobName = "";
 		String outputPath = "";
 		if (!action.equals("list")) {
 			if (filePath.equals("")) {
@@ -171,12 +170,16 @@ public class Main {
 			if (action.equals("upload")) {
 				UploaderDownloader.fileReference = filePath;
 			} else {
+				System.out.println("What do you want to name your blob?");
+				UploaderDownloader.blobName = sc.nextLine();
 				outputPath = getFilePath(sc, "download to");
 				UploaderDownloader.fileDestination = outputPath;
 			}
 		}
 		UploaderDownloader.blobAction(filePath, action);
-		System.out.println("File: " + filePath + " " + action + "ed!");
+		if (!action.equals("list")) {
+			System.out.println("File: " + filePath + " " + action + "ed!");
+		}
 		return outputPath;
 	}
 }

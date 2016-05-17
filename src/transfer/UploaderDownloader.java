@@ -79,7 +79,7 @@ public class UploaderDownloader {
 					        if (blobItem instanceof CloudBlob) {
 					        	CloudBlob blob1 = (CloudBlob) blobItem;
 					        	if (blob1.getUri().toString().equalsIgnoreCase(filePath)) {
-					             blob1.download(new FileOutputStream(fileDestination + blob1.getName()));
+					             blob1.download(new FileOutputStream(fileDestination));
 		
 					         }
 					     }
